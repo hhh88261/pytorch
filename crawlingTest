@@ -1,0 +1,40 @@
+#크롤링 후 필터링 테스트
+
+import requests
+import torch
+from transformers import BertTokenizer, BertForSequenceClassification
+from bs4 import BeautifulSoup
+
+model = BertForSequenceClassification.from_pretrained('./model')
+tokenizer = BertTokenizer.from_pretrained('./model')
+
+
+model.eval()
+
+def predict_text(text):
+    # 텍스트를 토큰화하고 텐서로 변환
+    inputs = tokenizer(text, return_tensors='pt', truncation=True, padding=True, max_length=128)
+    input_ids = inputs['input_ids']
+    attention_mask = inputs['attention_mask']
+
+    # 모델에 입력하고 예측 결과를 얻음
+    with torch.no_grad():
+        outputs = model(input_ids, attention_mask=attention_mask)
+        logits = outputs.logits
+        prediction = torch.argmax(logits, dim=-1).item()
+
+    return prediction
+
+headers = {
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.86 Safari/537.36'}
+data = requests.get('https://gall.dcinside.com/mgallery/board/lists/?id=stockus', headers=headers)
+
+soup = BeautifulSoup(data.text, 'html.parser')
+
+
+title = soup.select_one(
+    '#container > section.left_content > article:nth-child(3) > div.gall_listwrap.list > table > tbody > tr:nth-child(7) > td.gall_tit.ub-word > a').text
+
+result_title = predict_text(title)
+
+print(f'Title: {title}, Prediction: {"Profane" if result_title == 1 else "Clean"}')
