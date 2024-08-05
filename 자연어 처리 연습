@@ -1,15 +1,12 @@
-#바속어 필터링 모델
-
+#바속어 필터링 모델 연습
 import torch
 from transformers import BertTokenizer, BertForSequenceClassification, AdamW
 from torch.utils.data import DataLoader, Dataset
 from sklearn.model_selection import train_test_split
 
-# 데이터셋 예시 (임의의 텍스트와 레이블)
-texts = ["시발", "씨발", "ㅅㅂ", "행복"]
+texts = ["욕설1", "욕설2", "욕설3", "욕설4"]
 labels = [1, 1, 1, 0]  # 0: 비속어 없음, 1: 비속어 있음
 
-# 텍스트와 라벨을 분리
 X_train, X_test, y_train, y_test = train_test_split(texts, labels, test_size=0.2, random_state=42)
 
 # 토큰화
@@ -57,13 +54,13 @@ device = torch.device('cpu')  # CUDA 대신 CPU 사용
 model = BertForSequenceClassification.from_pretrained('bert-base-uncased', num_labels=2)
 model = model.to(device)
 
-# 옵티마이저 및 손실 함수 설정
+# 옵티마이저
 optimizer = AdamW(model.parameters(), lr=2e-5, correct_bias=False)
 criterion = torch.nn.CrossEntropyLoss()
 
-# 모델 학습
+# 학습하기
 model.train()
-for epoch in range(3):  # 에폭 수는 임의로 설정
+for epoch in range(3):  
     for batch in train_loader:
         input_ids = batch['input_ids'].to(device)
         attention_mask = batch['attention_mask'].to(device)
